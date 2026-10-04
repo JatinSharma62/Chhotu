@@ -4,7 +4,7 @@
 
 ## About the Project
 
-**VeriField** is a digital companion designed to make field drug testing more **consistent, traceable, and tamper-evident**.
+**TestVault** is a digital companion designed to make field drug testing more **consistent, traceable, and tamper-evident**.
 
 It uses a smartphone camera to analyse the colour response of field reagent tests, provides a **Positive / Negative / Inconclusive** result, and securely records the test details.
 
@@ -38,7 +38,7 @@ The prototype is built using:
 
 ## Important Note
 
-VeriField provides **presumptive field-test results only**. Positive or uncertain results require confirmation through appropriate laboratory testing.
+TestVault provides **presumptive field-test results only**. Positive or uncertain results require confirmation through appropriate laboratory testing.
 
 ## Future Scope
 
