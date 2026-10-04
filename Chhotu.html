@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeriField Diagnostics v1.2 - Field Chromatic Assay & Record System</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --panel-bg: #1e293b;
+            --panel-border: #334155;
+            --accent-blue: #38bdf8;
+            --accent-green: #22c55e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --input-bg: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            padding: 24px;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 16px;
+        }
+
+        .header-title h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title h1 span.badge {
+            font-size: 0.75rem;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-blue);
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+        }
+
+        .header-title p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .sensor-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .sensor-status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-header {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Profile Inputs */
+        .profile-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.5fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .profile-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .input-group input, .input-group select {
+            background: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--accent-blue);
+        }
+
+        /* Webcam & ROI Area */
+        .viewport-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #0f172a;
+            font-weight: 600;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #0ea5e9;
+        }
+
+        .optical-viewfinder {
+            background: #020617;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            height: 260px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .roi-box {
+            border: 2px dashed var(--accent-blue);
+            background: rgba(56, 189, 248, 0.05);
+            width: 180px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-radius: 4px;
+        }
+
+        .roi-label {
+            position: absolute;
+            top: -10px;
+            background: var(--bg-dark);
+            padding: 0 6px;
+            font-size: 0.65rem;
+            color: var(--accent-blue);
+            letter-spacing: 0.05em;
+        }
+
+        .roi-instruction {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .simulation-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* Diagnostic Outcome Panel */
+        .outcome-box {
+            background: #020617;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 140px;
+        }
+
+        .outcome-status {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .outcome-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: #020617;
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .metric-title {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .color-preview-box {
+            width: 24px;
+            height: 16px;
+            background: #334155;
+            border-radius: 3px;
+            display: inline-block;
+            vertical-align: middle;
+            border: 1px solid var(--panel-border);
+        }
+
+        /* Audit Log */
+        .audit-panel {
+            grid-column: 1 / -1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        td {
+            color: var(--text-main);
+        }
+
+        .empty-log {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                VeriField Diagnostics <span class="badge">v1.2-prototype</span>
+            </h1>
+            <p>Automated Field Chromatic Assay Reader & Patient Records</p>
+        </div>
+        <div class="sensor-status">
+            Optical Sensor Online
+        </div>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Left Panel: Subject Profile & Optical Viewfinder -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>Subject / Patient Profile</span>
+            </div>
+            
+            <div class="profile-row">
+                <div class="input-group">
+                    <label>Subject ID / Case #</label>
+                    <input type="text" id="caseId" value="CASE-8842">
+                </div>
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="fullName" value="John Doe">
+                </div>
+                <div class="input-group">
+                    <label>Target Assay / Test Kit</label>
+                    <select id="testKit">
+                        <option value="Scott Reagent (Cocaine - Cobalt Blue)">Scott Reagent (Cocaine - Cobalt Blue)</option>
+                        <option value="Marquis Reagent (Opiates - Deep Purple)">Marquis Reagent (Opiates - Deep Purple)</option>
+                        <option value="Fast Blue B (THC / Cannabinoids - Red)">Fast Blue B (THC / Cannabinoids - Red)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="panel-header" style="margin-top: 8px;">
+                <span>Optical Reaction Window (ROI)</span>
+                <div class="viewport-controls">
+                    <button class="btn" id="btnWebcam">Start Webcam</button>
+                    <button class="btn" id="btnPreset">Load Color Preset</button>
+                </div>
+            </div>
+
+            <div class="optical-viewfinder">
+                <div class="roi-box">
+                    <span class="roi-label">ROI: ACTIVE 44X24 MM</span>
+                    <span class="roi-instruction">ALIGN REACTION ZONE</span>
+                </div>
+            </div>
+
+            <div class="simulation-buttons">
+                <button class="btn" onclick="simulateAssay('positive')">Simulate Positive</button>
+                <button class="btn" onclick="simulateAssay('negative')">Simulate Negative</button>
+                <button class="btn" onclick="simulateAssay('glare')">Glare / Underexposed</button>
+                <button class="btn" onclick="simulateAssay('weak')">Weak Reaction</button>
+            </div>
+
+            <button class="btn btn-primary" style="justify-content: center; padding: 10px;" onclick="processSpectrum()">
+                Capture & Process Spectrum
+            </button>
+        </div>
+
+        <!-- Right Panel: Diagnostic Outcome -->
+        <div class="panel">
+            <div class="panel-header">
+                <span>Diagnostic Outcome</span>
+                <span id="outcomeState">AWAITING CAPTURE</span>
+            </div>
+
+            <div class="outcome-box" id="outcomeBox">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                <div>
+                    <div class="outcome-status">Ready for Assay</div>
+                    <div class="outcome-desc">Align the reaction zone within the reticle and trigger image processing.</div>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">SAMPLE COLOR</div>
+                    <div class="metric-value"><span class="color-preview-box" id="colorPreview"></span> <span id="colorName">--</span></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">HSV READOUT</div>
+                    <div class="metric-value" id="hsvReadout">H:-- S:-- V:--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">CONFIDENCE</div>
+                    <div class="metric-value" id="confidenceReadout">--%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel: Field Audit Log -->
+        <div class="panel audit-panel">
+            <div class="panel-header">
+                <span id="auditCount">Field Audit Log ( 0 )</span>
+                <button class="btn" onclick="exportCSV()">Export CSV</button>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID / Patient</th>
+                            <th>Assay</th>
+                            <th>Result</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody">
+                        <tr>
+                            <td colspan="4" class="empty-log">No records saved yet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let auditRecords = [];
+        let currentAssayState = {
+            status: "Ready",
+            colorHex: "#334155",
+            colorDesc: "--",
+            hsv: "H:-- S:-- V:--",
+            confidence: "--%"
+        };
+
+        function simulateAssay(type) {
+            const outcomeBox = document.getElementById('outcomeBox');
+            const outcomeState = document.getElementById('outcomeState');
+            const colorPreview = document.getElementById('colorPreview');
+            const colorName = document.getElementById('colorName');
+            const hsvReadout = document.getElementById('hsvReadout');
+            const confidenceReadout = document.getElementById('confidenceReadout');
+
+            if (type === 'positive') {
+                currentAssayState = {
+                    status: "POSITIVE (Cobalt Blue)",
+                    colorHex: "#1d4ed8",
+                    colorDesc: "Cobalt Blue",
+                    hsv: "H:215 S:85% V:85%",
+                    confidence: "98.4%",
+                    resultText: "POSITIVE"
+                };
+                outcomeBox.style.borderColor = "#38bdf8";
+                outcomeBox.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div><div class="outcome-status" style="color:#38bdf8">Positive Reaction Detected</div><div class="outcome-desc">Chromatic spectrum matches Scott Reagent target threshold.</div></div>`;
+            } else if (type === 'negative') {
+                currentAssayState = {
+                    status: "NEGATIVE (No Shift)",
+                    colorHex: "#64748b",
+                    colorDesc: "Neutral Gray",
+                    hsv: "H:210 S:15% V:45%",
+                    confidence: "96.1%",
+                    resultText: "NEGATIVE"
+                };
+                outcomeBox.style.borderColor = "#94a3b8";
+                outcomeBox.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg><div><div class="outcome-status" style="color:#94a3b8">Negative Result</div><div class="outcome-desc">No characteristic color transition observed in reaction window.</div></div>`;
+            } else if (type === 'glare') {
+                currentAssayState = {
+                    status: "ERROR: GLARE",
+                    colorHex: "#e2e8f0",
+                    colorDesc: "Saturated / Glare",
+                    hsv: "H:0 S:0% V:95%",
+                    confidence: "12.0%",
+                    resultText: "INVALID (GLARE)"
+                };
+                outcomeBox.style.borderColor = "#f59e0b";
+                outcomeBox.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><div class="outcome-status" style="color:#f59e0b">Optical Interference / Glare</div><div class="outcome-desc">High specular reflection detected. Adjust angle or lighting.</div></div>`;
+            } else if (type === 'weak') {
+                currentAssayState = {
+                    status: "INCONCLUSIVE",
+                    colorHex: "#9333ea",
+                    colorDesc: "Faint Trace",
+                    hsv: "H:270 S:40% V:60%",
+                    confidence: "54.2%",
+                    resultText: "INCONCLUSIVE"
+                };
+                outcomeBox.style.borderColor = "#a855f7";
+                outcomeBox.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><div><div class="outcome-status" style="color:#a855f7">Weak / Faint Reaction</div><div class="outcome-desc">Confidence below operational threshold. Retest recommended.</div></div>`;
+            }
+
+            outcomeState.innerText = currentAssayState.status;
+            colorPreview.style.background = currentAssayState.colorHex;
+            colorName.innerText = currentAssayState.colorDesc;
+            hsvReadout.innerText = currentAssayState.hsv;
+            confidenceReadout.innerText = currentAssayState.confidence;
+        }
+
+        function processSpectrum() {
+            if (!currentAssayState.resultText) {
+                alert("Please simulate an assay reaction first before capturing.");
+                return;
+            }
+
+            const caseId = document.getElementById('caseId').value;
+            const fullName = document.getElementById('fullName').value;
+            const testKit = document.getElementById('testKit').value;
+            const timestamp = new Date().toLocaleTimeString();
+
+            const record = {
+                id: `${caseId} (${fullName})`,
+                assay: testKit.split(' ')[0],
+                result: currentAssayState.resultText,
+                time: timestamp
+            };
+
+            auditRecords.unshift(record);
+            updateAuditTable();
+        }
+
+        function updateAuditTable() {
+            const tbody = document.getElementById('auditTableBody');
+            document.getElementById('auditCount').innerText = `Field Audit Log ( ${auditRecords.length} )`;
+
+            if (auditRecords.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="empty-log">No records saved yet.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            auditRecords.forEach(rec => {
+                let colorStyle = rec.result === 'POSITIVE' ? 'color: #38bdf8;' : (rec.result.includes('INVALID') ? 'color: #f59e0b;' : 'color: #94a3b8;');
+                html += `<tr>
+                    <td>${rec.id}</td>
+                    <td>${rec.assay}</td>
+                    <td style="font-weight: 600; ${colorStyle}">${rec.result}</td>
+                    <td>${rec.time}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function exportCSV() {
+            if (auditRecords.length === 0) {
+                alert("No records available to export.");
+                return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,ID/Patient,Assay,Result,Time\n";
+            auditRecords.forEach(row => {
+                csvContent += `"${row.id}","${row.assay}","${row.result}","${row.time}"\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "verifield_audit_log.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.getElementById('btnWebcam').addEventListener('click', () => {
+            alert("Webcam optical sensor feed active.");
+        });
+
+        document.getElementById('btnPreset').addEventListener('click', () => {
+            simulateAssay('positive');
+        });
+    </script>
+</body>
+</html>
